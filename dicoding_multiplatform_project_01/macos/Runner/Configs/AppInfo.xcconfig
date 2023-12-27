@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = dicoding_multiplatform_project_01
+PRODUCT_NAME = untitled1
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.nicholasWijaya.dicodingMultiplatformProject01
+PRODUCT_BUNDLE_IDENTIFIER = com.example.untitled1
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.nicholasWijaya. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.

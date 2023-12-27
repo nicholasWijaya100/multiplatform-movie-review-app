@@ -1,6 +1,6 @@
-# dicoding_multiplatform_project_01
+# untitled1
 
-Flutter Project untuk dicoding flutter pemula
+A new Flutter project.
 
 ## Getting Started
 

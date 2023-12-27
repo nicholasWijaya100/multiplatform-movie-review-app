@@ -12,8 +12,6 @@ class MovieProvider with ChangeNotifier {
     final response = await http.get(Uri.parse(url));
     final json = jsonDecode(response.body);
     _movies = json['results'];
-    print(json);
-    print('aaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     notifyListeners();
   }
 }

@@ -66,6 +66,7 @@ class RegisterPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+
         title: const Text('Create Account'),
         backgroundColor: Colors.deepOrange,
       ),

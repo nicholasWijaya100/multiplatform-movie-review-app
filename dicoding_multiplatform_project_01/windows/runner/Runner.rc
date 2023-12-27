@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.nicholasWijaya" "\0"
-            VALUE "FileDescription", "dicoding_multiplatform_project_01" "\0"
+            VALUE "CompanyName", "com.example" "\0"
+            VALUE "FileDescription", "untitled1" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "dicoding_multiplatform_project_01" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.nicholasWijaya. All rights reserved." "\0"
-            VALUE "OriginalFilename", "dicoding_multiplatform_project_01.exe" "\0"
-            VALUE "ProductName", "dicoding_multiplatform_project_01" "\0"
+            VALUE "InternalName", "untitled1" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
+            VALUE "OriginalFilename", "untitled1.exe" "\0"
+            VALUE "ProductName", "untitled1" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
