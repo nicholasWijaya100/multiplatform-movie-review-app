@@ -1,19 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../provider/review_provider.dart';
 import '../provider/user_provider.dart';
 
 class MovieDetailPage extends StatelessWidget {
   final dynamic movie;
+
   const MovieDetailPage({super.key, required this.movie});
+
+
 
   @override
   Widget build(BuildContext context) {
     TextTheme textTheme = Theme.of(context).textTheme;
     UserProvider userProvider = Provider.of<UserProvider>(context);
-
+    ReviewProvider reviewProvider = Provider.of<ReviewProvider>(context);
+    final userName = userProvider.getCurrentUserName();
     Movie movieObject = Movie.fromJson(movie);
     bool isFavorite = userProvider.isMovieFavorite(movieObject.originalTitle);
+    List<Review> reviews = reviewProvider.getReviews(movieObject.originalTitle); // Fetch reviews for the movie
+    final TextEditingController reviewController = TextEditingController(); // Add this line
+
+    bool hasReviewed = reviewProvider.hasUserReviewed(movieObject.originalTitle, userName!);
+
+    void showAddReviewDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Add Comment'),
+            content: TextField(
+              controller: reviewController,
+              decoration: const InputDecoration(hintText: "Enter your comment here"),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('Add'),
+                onPressed: () {
+                  DateTime now = DateTime.now();
+                  final comment = reviewController.text;
+                  if( comment == ""){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Fill all field!')),
+                    );
+                  }else{
+                    reviewProvider.addReview(movie["original_title"], userName!, DateFormat('yyyy-MM-dd').format(now), comment);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Comment added.')),
+                    );
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -108,6 +159,30 @@ class MovieDetailPage extends StatelessWidget {
                           movie["overview"],
                           style: textTheme.bodyText2?.copyWith(height: 1.5),
                         ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Reviews', style: textTheme.headline6),
+                            if (!hasReviewed)
+                              ElevatedButton(
+                                onPressed: () {
+                                  showAddReviewDialog(context);
+                                },
+                                child: const Text('Add A Review'),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        for (var review in reviews)
+                          Card(
+                            child: ListTile(
+                              title: Text(review.username),
+                              subtitle: Text(review.comment),
+                              trailing: Text(review.date),
+                            ),
+                          ),
+
                       ],
                     ),
                   ),
@@ -115,6 +190,7 @@ class MovieDetailPage extends StatelessWidget {
               ],
             ),
           ),
+
           Positioned(
             top: MediaQuery.of(context).padding.top,
             left: 0,
