@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../provider/user_provider.dart';
 import 'main_page.dart';
 import 'register.dart';
@@ -10,7 +11,7 @@ class LoginPage extends StatelessWidget {
 
   LoginPage({super.key});
 
-  void _loginUser(BuildContext context) {
+  Future<void> _loginUser(BuildContext context) async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -28,17 +29,28 @@ class LoginPage extends StatelessWidget {
       );
       return;
     }
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    bool isLoggedIn = userProvider.login(email, password);
 
-    if (isLoggedIn) {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
       );
-    } else {
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Invalid credentials. Please try again.';
+      // Customize error message based on FirebaseAuthException
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Wrong password provided for that user.';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials. Please try again.')),
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }

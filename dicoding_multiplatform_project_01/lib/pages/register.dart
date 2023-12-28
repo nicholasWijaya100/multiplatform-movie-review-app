@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/user_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController _nameController = TextEditingController();
@@ -10,7 +11,7 @@ class RegisterPage extends StatelessWidget {
 
   RegisterPage({super.key});
 
-  void _registerUser(BuildContext context) {
+  Future<void> _registerUser(BuildContext context) async {
     final name = _nameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -46,16 +47,27 @@ class RegisterPage extends StatelessWidget {
     }
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    bool isRegistered = userProvider.register(name,email,password);
 
-    if (isRegistered) {
-      Navigator.of(context).pop();
+    try {
+      // Await the register function and get the result
+      bool isRegistered = await userProvider.register(name, email, password);
+
+      if (isRegistered) {
+        // Handle successful registration
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful! Please log in.')),
+        );
+      } else {
+        // Handle failed registration
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An account with this email already exists.')),
+        );
+      }
+    } catch (e) {
+      // Handle exceptions from register function
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration successful! Please log in.')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An account with this email already exists.')),
+        SnackBar(content: Text('An error occurred: $e')),
       );
     }
   }

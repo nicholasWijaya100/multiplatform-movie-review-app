@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class Movie {
   String originalTitle;
@@ -68,26 +69,40 @@ class UserProvider with ChangeNotifier {
   List<User> _users = [];
   User? _currentUser;
 
-  bool register(String name, String email, String password) {
-    if (_users.any((user) => user.email == email)) {
-      return false; // Pengguna sudah ada
-    } else {
-      _users.add(User(name: name, email: email, password: password));
+  // Convert Firebase User to App User
+  User? _userFromFirebaseUser(firebase_auth.User? user) {
+    if (user == null) return null;
+    // Ensure that the `User` class here is the one defined in your application
+    return User(
+      name: user.displayName ?? '',
+      email: user.email ?? '',
+      password: '', // You might want to handle the password differently as it's not directly available from Firebase user
+      // Handle favoriteMovies initialization if necessary
+    );
+  }
+
+  Future<bool> register(String name, String email, String password) async {
+    try {
+      firebase_auth.UserCredential userCredential = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      _currentUser = _userFromFirebaseUser(userCredential.user);
+      // Additional logic (e.g., storing user details in Firestore) goes here
       notifyListeners();
-      return true; // Pendaftaran berhasil
+      return true;
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      // Handle Firebase Auth exceptions
+      return false;
     }
   }
 
-  bool login(String email, String password) {
-    _currentUser = _users.firstWhere(
-          (user) => user.email == email && user.password == password,
-    );
-
-    if (_currentUser != null) {
+  Future<bool> login(String email, String password) async {
+    try {
+      firebase_auth.UserCredential userCredential = await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      _currentUser = _userFromFirebaseUser(userCredential.user);
       notifyListeners();
-      return true; // Login successful
+      return true;
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return false;
     }
-    return false; // Login failed
   }
 
   String? getCurrentUserEmail() {
@@ -96,6 +111,10 @@ class UserProvider with ChangeNotifier {
 
   String? getCurrentUserName() {
     return _currentUser?.name;
+  }
+
+  User? getCurrentUser() {
+    return _currentUser;
   }
 
   String? getCurrentPassword() {
