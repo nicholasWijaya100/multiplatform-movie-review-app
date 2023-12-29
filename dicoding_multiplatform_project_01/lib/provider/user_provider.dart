@@ -196,45 +196,64 @@ class UserProvider with ChangeNotifier {
     return _currentUser?.password;
   }
 
-// Example: Adding a movie to favorites
-  void addMovieToFavorites(Movie movie) {
-    // Find the index of the current user in the _users list
-    int userIndex = _users.indexWhere((user) => user.email == _currentUser!.email);
+  Future<void> addMovieToFavorites(Movie movie) async {
+    if (_currentUser == null) return;
 
-    // Check if userIndex is valid
-    if (userIndex != -1) {
-      _users[userIndex].favoriteMovies.add(movie);
+    _currentUser!.favoriteMovies.add(movie);
+
+    // Update the favorite movies in Firestore
+    var userQuery = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: _currentUser!.email)
+        .get();
+    if (userQuery.docs.isNotEmpty) {
+      var userDoc = userQuery.docs.first;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userDoc.id)
+          .update({
+        'favoriteMovies': FieldValue.arrayUnion([movie.toJson()]),
+      });
     }
-
     notifyListeners();
   }
 
-  void removeMovieFromFavorites(String movieTitle) {
+  Future<void> removeMovieFromFavorites(String movieTitle) async {
     if (_currentUser == null) return;
 
-    // Find the index of the movie in the current user's favoriteMovies list
     int movieIndex = _currentUser!.favoriteMovies.indexWhere((movie) => movie.originalTitle == movieTitle);
 
-    // Check if the movie is found
     if (movieIndex != -1) {
-      // Find the index of the current user in the _users list
-      int userIndex = _users.indexWhere((user) => user.email == _currentUser!.email);
+      Movie movieToRemove = _currentUser!.favoriteMovies[movieIndex];
+      _currentUser!.favoriteMovies.removeAt(movieIndex);
 
-      // Check if userIndex is valid
-      if (userIndex != -1) {
-        // Remove the movie from the user in the _users list
-        _users[userIndex].favoriteMovies.removeAt(movieIndex);
+      // Query for the user document by email
+      var userQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: _currentUser!.email)
+          .get();
+
+      // Check if the user document exists
+      if (userQuery.docs.isNotEmpty) {
+        var userDoc = userQuery.docs.first;
+
+        // Update Firestore document
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userDoc.id)
+            .update({
+          'favoriteMovies': FieldValue.arrayRemove([movieToRemove.toJson()]),
+        });
       }
 
       notifyListeners();
     }
   }
 
-// Example: Checking if a movie is in favorites
   bool isMovieFavorite(String movieTitle) {
     return _currentUser?.favoriteMovies.any((movie) => movie.originalTitle == movieTitle) ?? false;
   }
-  // Function to get the current user's favorite movies
+
   List<Movie> getCurrentUserFavoriteMovies() {
     if (_currentUser != null) {
       return _currentUser!.favoriteMovies;
@@ -242,6 +261,7 @@ class UserProvider with ChangeNotifier {
       return []; // Return an empty list if there's no current user
     }
   }
+
   bool updateUser(String newName, String newEmail, String newPassword) {
     if (_currentUser == null) {
       return false; // No current user to update
