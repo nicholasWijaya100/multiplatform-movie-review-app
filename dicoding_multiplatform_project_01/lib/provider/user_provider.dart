@@ -262,33 +262,43 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  bool updateUser(String newName, String newEmail, String newPassword) {
+  Future<bool> updateUser(String newName, String newPassword) async {
     if (_currentUser == null) {
       return false; // No current user to update
     }
 
-    // Check if the new email is already in use by another user
-    if (_users.any((user) => user.email == newEmail && user.email != _currentUser!.email)) {
-      return false; // Email already in use
+    try {
+      // Query for the user document by email
+      var userQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: _currentUser!.email)
+          .get();
+
+      // Check if the user document exists
+      if (userQuery.docs.isNotEmpty) {
+        var userDoc = userQuery.docs.first;
+
+        // Update the user's details in Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userDoc.id)
+            .update({
+          'name': newName,
+          'password': newPassword, // Storing passwords in plain text is not recommended
+        });
+
+        // Update the local user details
+        _currentUser!.name = newName;
+        _currentUser!.password = newPassword;
+        notifyListeners();
+
+        return true; // Update successful
+      } else {
+        return false; // User not found
+      }
+    } catch (e) {
+      // Handle any errors here
+      return false; // Update failed
     }
-
-    // Find the index of the current user in the _users list
-    int userIndex = _users.indexWhere((user) => user.email == _currentUser!.email);
-
-    // Check if userIndex is valid
-    if (userIndex != -1) {
-      // Update the user's details
-      _users[userIndex].name = newName;
-      _users[userIndex].email = newEmail;
-      _users[userIndex].password = newPassword;
-
-      // Update the current user reference
-      _currentUser = _users[userIndex];
-      notifyListeners();
-      return true; // Update successful
-    }
-
-    return false; // Update failed
   }
-
 }

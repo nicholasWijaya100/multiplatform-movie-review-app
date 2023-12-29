@@ -24,14 +24,14 @@ class AccountPage extends StatelessWidget {
             child: ListBody(
               children: <Widget>[
                 TextFormField(
+                  initialValue: userProvider.getCurrentUserEmail(),
+                  decoration: const InputDecoration(hintText: "Email"),
+                  readOnly: true, // Makes the field read-only
+                ),
+                TextFormField(
                   initialValue: userProvider.getCurrentUserName(),
                   decoration: const InputDecoration(hintText: "Name"),
                   onChanged: (value) => newName = value,
-                ),
-                TextFormField(
-                  initialValue: userProvider.getCurrentUserEmail(),
-                  decoration: const InputDecoration(hintText: "Email"),
-                  onChanged: (value) => newEmail = value,
                 ),
                 TextFormField(
                   obscureText: true,
@@ -82,7 +82,7 @@ class AccountPage extends StatelessWidget {
                   );
                 }else if(oldPassword == userProvider.getCurrentPassword()){
                   if(newPassword == confirmPassword){
-                    userProvider.updateUser(newName, newEmail, newPassword);
+                    userProvider.updateUser(newName, newPassword);
                     Navigator.of(context).pop();
                   }else{
                     ScaffoldMessenger.of(context).showSnackBar(
