@@ -12,8 +12,9 @@ class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
   Future<void> _loginUser(BuildContext context) async {
-    final email = _emailController.text;
-    final password = _passwordController.text;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -30,31 +31,18 @@ class LoginPage extends StatelessWidget {
       return;
     }
 
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
+    bool loginSuccess = await userProvider.login(email, password);
+    if (loginSuccess) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
       );
-    } on FirebaseAuthException catch (e) {
-      String errorMessage = 'Invalid credentials. Please try again.';
-      // Customize error message based on FirebaseAuthException
-      if (e.code == 'user-not-found') {
-        errorMessage = 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Wrong password provided for that user.';
-      }
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+        const SnackBar(content: Text('Invalid credentials. Please try again.')),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

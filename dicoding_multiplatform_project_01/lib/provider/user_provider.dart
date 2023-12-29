@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Movie {
   String originalTitle;
@@ -62,12 +63,62 @@ class User {
     required this.password,
     List<Movie>? favoriteMovies,
   }) : this.favoriteMovies = favoriteMovies ?? [];
+
+  // Add this factory constructor
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      name: json['name'] as String, // Replace with your actual field names
+      email: json['email'] as String,
+      password: json['password'] as String,
+      // For the list of movies, you need to convert each item in the list
+      favoriteMovies: json['favoriteMovies'] != null
+          ? List<Movie>.from(
+        json['favoriteMovies'].map((x) => Movie.fromJson(x)),
+      )
+          : [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    // Implement if needed for converting User object to Map<String, dynamic>
+    return {
+      'name': name,
+      'email': email,
+      'password': password,
+      'favoriteMovies': favoriteMovies.map((x) => x.toJson()).toList(),
+    };
+  }
 }
 
 
 class UserProvider with ChangeNotifier {
   List<User> _users = [];
   User? _currentUser;
+
+  // Function to fetch users from Firebase Firestore
+  Future<void> fetchUsersFromFirebase() async {
+    try {
+      // Reference to the users collection in Firestore
+      CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+
+      // Fetch the snapshot of the users collection
+      QuerySnapshot snapshot = await usersCollection.get();
+
+      // Clear existing users
+      _users.clear();
+
+      // Convert each document to a User object and add to _users list
+      for (var doc in snapshot.docs) {
+        var userData = doc.data() as Map<String, dynamic>;
+        _users.add(User.fromJson(userData));
+      }
+
+      notifyListeners();
+    } catch (e) {
+      // Handle any errors here
+      print("Error fetching users: $e");
+    }
+  }
 
   // Convert Firebase User to App User
   User? _userFromFirebaseUser(firebase_auth.User? user) {
@@ -77,15 +128,25 @@ class UserProvider with ChangeNotifier {
       name: user.displayName ?? '',
       email: user.email ?? '',
       password: '', // You might want to handle the password differently as it's not directly available from Firebase user
-      // Handle favoriteMovies initialization if necessary
+      favoriteMovies: [], // Handle favoriteMovies initialization if necessary
     );
   }
 
   Future<bool> register(String name, String email, String password) async {
     try {
       firebase_auth.UserCredential userCredential = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
-      _currentUser = _userFromFirebaseUser(userCredential.user);
-      // Additional logic (e.g., storing user details in Firestore) goes here
+
+      // Create a user object
+      User newUser = User(
+        name: name,
+        email: email,
+        password: password, // Consider not storing password here for security reasons
+      );
+
+      // Store user details in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set(newUser.toJson());
+
+      _currentUser = newUser;
       notifyListeners();
       return true;
     } on firebase_auth.FirebaseAuthException catch (e) {
@@ -97,7 +158,21 @@ class UserProvider with ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       firebase_auth.UserCredential userCredential = await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-      _currentUser = _userFromFirebaseUser(userCredential.user);
+
+      // Query Firestore for user document with matching email
+      QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance.collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (userQuerySnapshot.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = userQuerySnapshot.docs.first;
+        _currentUser = User.fromJson(userDoc.data() as Map<String, dynamic>);
+      } else {
+        // Handle the case where no user data is found in Firestore
+        return false;
+      }
+
       notifyListeners();
       return true;
     } on firebase_auth.FirebaseAuthException catch (e) {
