@@ -13,8 +13,8 @@ class MovieDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     TextTheme textTheme = Theme.of(context).textTheme;
-    UserProvider userProvider = Provider.of<UserProvider>(context);
-    ReviewProvider reviewProvider = Provider.of<ReviewProvider>(context);
+    UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
+    ReviewProvider reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
 
     // Async handling: Check if userName is available
     final userName = userProvider.getCurrentUserName();

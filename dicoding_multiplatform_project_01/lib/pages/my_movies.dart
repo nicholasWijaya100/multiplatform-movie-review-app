@@ -39,6 +39,7 @@ class MyMovie extends StatelessWidget {
     final movies = userProvider.getCurrentUserFavoriteMovies();
 
     return Scaffold(
+      backgroundColor: Color(0xffBBA585),
       body: Stack(
         children: [
           SafeArea(

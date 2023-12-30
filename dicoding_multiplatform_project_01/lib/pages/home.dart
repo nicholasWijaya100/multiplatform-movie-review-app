@@ -41,6 +41,7 @@ class HomePage extends StatelessWidget {
     int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 5 : 2;
 
     return Scaffold(
+      backgroundColor: Color(0xffBBA585),
       body: Consumer<MovieProvider>(
         builder: (context, movieProvider, _) {
           if (movieProvider.movies.isEmpty) {

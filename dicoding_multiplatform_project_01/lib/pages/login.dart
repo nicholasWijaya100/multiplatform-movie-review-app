@@ -47,6 +47,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xffBBA585),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -55,7 +56,7 @@ class LoginPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const FlutterLogo(size: 120.0),
+                Image.asset('assets/images/movie_review_project_logo2.jpeg', height: 160.0, width: 160.0),
                 const SizedBox(height: 48.0),
                 TextFormField(
                   controller: _emailController,
@@ -88,6 +89,7 @@ class LoginPage extends StatelessWidget {
                   ),
                   child: const Text('LOGIN'),
                 ),
+                const SizedBox(height: 24.0),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

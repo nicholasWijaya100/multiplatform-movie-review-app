@@ -77,18 +77,15 @@ class RegisterPage extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(
-
-        title: const Text('Create Account'),
-        backgroundColor: Colors.deepOrange,
-      ),
+      backgroundColor: Color(0xffBBA585),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(screenHeight * 0.03),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              FlutterLogo(size: screenHeight * 0.1),
+              SizedBox(height: screenHeight * 0.05),
+              Image.asset('assets/images/movie_review_project_logo2.jpeg', height: screenHeight * 0.2),
               SizedBox(height: screenHeight * 0.05),
 
               TextFormField(
@@ -145,8 +142,7 @@ class RegisterPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => _registerUser(context),
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.deepOrange,
-                  onPrimary: Colors.white,
+                  backgroundColor: Colors.orange,
                   shape: const StadiumBorder(),
                   padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
                 ),
@@ -158,9 +154,6 @@ class RegisterPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.deepOrange,
-                ),
                 child: const Text('Already have an account? Sign in'),
               ),
             ],
