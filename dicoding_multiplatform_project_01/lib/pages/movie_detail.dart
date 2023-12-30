@@ -136,19 +136,23 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                   ? const Icon(Icons.favorite, color: Colors.red)
                   : const Icon(Icons.favorite_border, color: Colors.grey),
               onPressed: () {
+                // Toggle the favorite status here
                 if (isFavorite) {
+                  userProvider.removeMovieFromFavorites(movieObject.originalTitle);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${widget.movie["original_title"]} removed from favorites')),
                   );
-                  userProvider.removeMovieFromFavorites(movieObject.originalTitle);
                 } else {
+                  userProvider.addMovieToFavorites(movieObject);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${widget.movie["original_title"]} added to favorites')),
                   );
-                  userProvider.addMovieToFavorites(movieObject);
                 }
-                // This will cause the widget to rebuild and show the new favorite status.
-                userProvider.notifyListeners();
+
+                // Call setState to immediately reflect the changes in the UI
+                setState(() {
+                  isFavorite = !isFavorite;
+                });
               },
             ),
           ],
