@@ -5,12 +5,16 @@ import 'package:provider/provider.dart';
 import '../provider/review_provider.dart';
 import '../provider/user_provider.dart';
 
-class MovieDetailPage extends StatelessWidget {
+class MovieDetailPage extends StatefulWidget {
   final dynamic movie;
 
   const MovieDetailPage({super.key, required this.movie});
 
   @override
+  _MovieDetailPageState createState() => _MovieDetailPageState();
+}
+
+class _MovieDetailPageState extends State<MovieDetailPage> {
   Widget build(BuildContext context) {
     TextTheme textTheme = Theme.of(context).textTheme;
     UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -19,7 +23,7 @@ class MovieDetailPage extends StatelessWidget {
     final userName = userProvider.getCurrentUserName();
     final isUserLoggedIn = userName != null;
 
-    Movie movieObject = Movie.fromJson(movie);
+    Movie movieObject = Movie.fromJson(widget.movie);
     final TextEditingController reviewController = TextEditingController();
 
     return Scaffold(
@@ -35,7 +39,7 @@ class MovieDetailPage extends StatelessWidget {
                   alignment: Alignment.bottomLeft,
                   children: [
                     Image.network(
-                      'https://image.tmdb.org/t/p/w500${movie["backdrop_path"]}',
+                      'https://image.tmdb.org/t/p/w500${widget.movie["backdrop_path"]}',
                       fit: BoxFit.cover,
                       height: 300,
                       width: double.infinity,
@@ -53,7 +57,7 @@ class MovieDetailPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        movie["original_title"],
+                        widget.movie["original_title"],
                         style: textTheme.headline4?.copyWith(color: Colors.white),
                       ),
                     ),
@@ -118,7 +122,7 @@ class MovieDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             RatingBarIndicator(
-              rating: movie["vote_average"] / 2,
+              rating: widget.movie["vote_average"] / 2,
               itemBuilder: (context, index) => const Icon(
                 Icons.star,
                 color: Colors.amber,
@@ -134,12 +138,12 @@ class MovieDetailPage extends StatelessWidget {
               onPressed: () {
                 if (isFavorite) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${movie["original_title"]} removed from favorites')),
+                    SnackBar(content: Text('${widget.movie["original_title"]} removed from favorites')),
                   );
                   userProvider.removeMovieFromFavorites(movieObject.originalTitle);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${movie["original_title"]} added to favorites')),
+                    SnackBar(content: Text('${widget.movie["original_title"]} added to favorites')),
                   );
                   userProvider.addMovieToFavorites(movieObject);
                 }
@@ -150,15 +154,15 @@ class MovieDetailPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text('Release Date : ${movie["release_date"]}', style: textTheme.titleMedium),
-        movie["adult"] == true
+        Text('Release Date : ${widget.movie["release_date"]}', style: textTheme.titleMedium),
+        widget.movie["adult"] == true
             ? Text('Minimum Age: 18+', style: textTheme.titleMedium)
             : Text('Minimum Age: 13+', style: textTheme.titleMedium),
         const SizedBox(height: 16),
         Text('Overview', style: textTheme.headline6),
         const SizedBox(height: 8),
         Text(
-          movie["overview"],
+          widget.movie["overview"],
           style: textTheme.bodyText2?.copyWith(height: 1.5),
         ),
         const SizedBox(height: 16),
@@ -241,12 +245,16 @@ class MovieDetailPage extends StatelessWidget {
                 }
 
                 DateTime now = DateTime.now();
+
                 await reviewProvider.addReview(movieObject.originalTitle, userName, DateFormat('yyyy-MM-dd').format(now), comment);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Comment added.')),
                 );
                 Navigator.of(context).pop();
                 reviewController.clear();
+
+                // Trigger a rebuild to refresh the reviews
+                setState(() {});
               },
             ),
           ],
