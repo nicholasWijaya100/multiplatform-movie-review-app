@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../provider/review_provider.dart';
 import '../provider/user_provider.dart';
+import '../provider/movie_provider.dart';
 
 class MovieDetailPage extends StatefulWidget {
   final dynamic movie;
@@ -19,102 +21,113 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
     TextTheme textTheme = Theme.of(context).textTheme;
     UserProvider userProvider = Provider.of<UserProvider>(context, listen: false);
     ReviewProvider reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
-
+    MovieProvider movieProvider = Provider.of<MovieProvider>(context, listen: false);
     final userName = userProvider.getCurrentUserName();
     final isUserLoggedIn = userName != null;
 
     Movie movieObject = Movie.fromJson(widget.movie);
     final TextEditingController reviewController = TextEditingController();
-
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: FutureBuilder(
+        future: movieProvider.getMovieDetail(widget.movie["original_title"]),
+        builder: (context, snapshot){
+          if(snapshot.connectionState == ConnectionState.waiting){
+            return const Center(child: CircularProgressIndicator());
+          }
+          final detail = movieProvider.palmResponse;
+          return Scaffold(
+            extendBodyBehindAppBar: true,
+            body: Stack(
               children: [
-                // Movie image and other UI elements
-                Stack(
-                  alignment: Alignment.bottomLeft,
-                  children: [
-                    Image.network(
-                      'https://image.tmdb.org/t/p/w500${widget.movie["backdrop_path"]}',
-                      fit: BoxFit.cover,
-                      height: 300,
-                      width: double.infinity,
-                    ),
-                    Container(
-                      height: 300,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Movie image and other UI elements
+                      Stack(
+                        alignment: Alignment.bottomLeft,
+                        children: [
+                          Image.network(
+                            'https://image.tmdb.org/t/p/w500${widget.movie["backdrop_path"]}',
+                            fit: BoxFit.cover,
+                            height: 300,
+                            width: double.infinity,
+                          ),
+                          Container(
+                            height: 300,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              widget.movie["original_title"],
+                              style: textTheme.headline4?.copyWith(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: FutureBuilder<bool>(
+                            future: isUserLoggedIn ? reviewProvider.hasUserReviewed(movieObject.originalTitle, userName) : Future.value(false),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              bool hasReviewed = snapshot.data ?? false;
+                              return buildReviewSection(context, textTheme, movieObject, hasReviewed, reviewController, reviewProvider, userProvider, detail);
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        widget.movie["original_title"],
-                        style: textTheme.headline4?.copyWith(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    ],
                   ),
+                ),
+                // Back button
+                Positioned(
+                  top: MediaQuery.of(context).padding.top,
+                  left: 0,
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: FutureBuilder<bool>(
-                      future: isUserLoggedIn ? reviewProvider.hasUserReviewed(movieObject.originalTitle, userName) : Future.value(false),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        bool hasReviewed = snapshot.data ?? false;
-                        return buildReviewSection(context, textTheme, movieObject, hasReviewed, reviewController, reviewProvider, userProvider);
-                      },
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipOval(
+                      child: Material(
+                        color: Colors.black.withOpacity(0.5),
+                        child: InkWell(
+                          splashColor: Colors.white.withOpacity(0.2),
+                          onTap: () => Navigator.of(context).pop(),
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(Icons.arrow_back, color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          // Back button
-          Positioned(
-            top: MediaQuery.of(context).padding.top,
-            left: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ClipOval(
-                child: Material(
-                  color: Colors.black.withOpacity(0.5),
-                  child: InkWell(
-                    splashColor: Colors.white.withOpacity(0.2),
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Icon(Icons.arrow_back, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget buildReviewSection(BuildContext context, TextTheme textTheme, Movie movieObject, bool hasReviewed, TextEditingController reviewController, ReviewProvider reviewProvider, UserProvider userProvider) {
+  Widget buildReviewSection(BuildContext context, TextTheme textTheme, Movie movieObject, bool hasReviewed, TextEditingController reviewController, ReviewProvider reviewProvider, UserProvider userProvider, String detail) {
+    final detailObject = json.decode(detail);
     bool isFavorite = userProvider.isMovieFavorite(movieObject.originalTitle);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -158,17 +171,19 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
           ],
         ),
         const SizedBox(height: 16),
-        Text('Release Date : ${widget.movie["release_date"]}', style: textTheme.titleMedium),
-        widget.movie["adult"] == true
-            ? Text('Minimum Age: 18+', style: textTheme.titleMedium)
-            : Text('Minimum Age: 13+', style: textTheme.titleMedium),
+        Text('Release Date : ' + detailObject['releaseDate'], style: textTheme.titleMedium),
+        const SizedBox(height: 16),
+        Text('Directed By : ' + detailObject['directedBy'], style: textTheme.titleMedium),
+        const SizedBox(height: 16),
+        Text('Starring : ' + detailObject["starring"].toString(), style: textTheme.titleMedium),
+        const SizedBox(height: 16),
+        Text('Duration : ' + detailObject["runningTime"].toString() + ' minutes', style: textTheme.titleMedium),
+        const SizedBox(height: 16),
+        Text('Minimum Age : ' + detailObject["minimumAge"].toString(), style: textTheme.titleMedium),
         const SizedBox(height: 16),
         Text('Overview', style: textTheme.headline6),
         const SizedBox(height: 8),
-        Text(
-          widget.movie["overview"],
-          style: textTheme.bodyText2?.copyWith(height: 1.5),
-        ),
+        Text(detailObject["shortOverview"], style: textTheme.titleMedium),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
