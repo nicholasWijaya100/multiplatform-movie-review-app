@@ -44,7 +44,6 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Movie image and other UI elements
                       Stack(
                         alignment: Alignment.bottomLeft,
                         children: [
@@ -126,7 +125,17 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
   }
 
   Widget buildReviewSection(BuildContext context, TextTheme textTheme, Movie movieObject, bool hasReviewed, TextEditingController reviewController, ReviewProvider reviewProvider, UserProvider userProvider, String detail) {
-    final detailObject = json.decode(detail);
+    var detailObject = null;
+    try {
+      detailObject = json.decode(detail);
+    } catch (e) {
+      print('error $e');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('getMovieDetail from API failed')),
+        );
+      });
+    }
     bool isFavorite = userProvider.isMovieFavorite(movieObject.originalTitle);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,21 +179,36 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text('Release Date : ' + detailObject['releaseDate'], style: textTheme.titleMedium),
-        const SizedBox(height: 16),
-        Text('Directed By : ' + detailObject['directedBy'], style: textTheme.titleMedium),
-        const SizedBox(height: 16),
-        Text('Starring : ' + detailObject["starring"].toString(), style: textTheme.titleMedium),
-        const SizedBox(height: 16),
-        Text('Duration : ' + detailObject["runningTime"].toString() + ' minutes', style: textTheme.titleMedium),
-        const SizedBox(height: 16),
-        Text('Minimum Age : ' + detailObject["minimumAge"].toString(), style: textTheme.titleMedium),
-        const SizedBox(height: 16),
-        Text('Overview', style: textTheme.headline6),
-        const SizedBox(height: 8),
-        Text(detailObject["shortOverview"], style: textTheme.titleMedium),
-        const SizedBox(height: 16),
+        ...(detailObject != null ? [
+          const SizedBox(height: 16),
+          Text('Release Date : ' + detailObject['releaseDate'], style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Directed By : ' + detailObject['directedBy'], style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Starring : ' + detailObject["starring"].toString(), style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Duration : ' + detailObject["runningTime"].toString() + ' minutes', style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Minimum Age : ' + detailObject["minimumAge"].toString(), style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Overview', style: textTheme.headline6),
+          const SizedBox(height: 8),
+          Text(detailObject["shortOverview"], style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+        ] : [
+          const SizedBox(height: 16),
+          Text('Release Date : ${widget.movie["release_date"]}', style: textTheme.titleMedium),
+          widget.movie["adult"] == true
+              ? Text('Minimum Age: 18+', style: textTheme.titleMedium)
+              : Text('Minimum Age: 13+', style: textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Text('Overview', style: textTheme.headline6),
+          const SizedBox(height: 8),
+          Text(
+            widget.movie["overview"],
+            style: textTheme.bodyText2?.copyWith(height: 1.5),
+          ),
+        ]),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

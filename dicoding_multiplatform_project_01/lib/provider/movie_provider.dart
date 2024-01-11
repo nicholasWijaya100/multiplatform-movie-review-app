@@ -28,7 +28,11 @@ class MovieProvider with ChangeNotifier {
         {
           "parts": [
             {
-              "text": "Give description about movie $title. Give the answer in a object {title,releaseDate,directedBy,starring,minimumAge,runningTime,shortOverview}. minimumAge as integer, runningTime as integer and Starring as String like name 1, name 2, name 3 not array"
+              "text": "Give details about movie $title. "
+                  "Give the answer in a object "
+                  "{title,releaseDate,directedBy,starring,minimumAge,runningTime,shortOverview}."
+                  "releaseDate format is like January 1, 2024 minimumAge as integer, runningTime as integer and Starring as String like name 1, "
+                  "name 2, name 3 not array, and shortOverview in 4 sentences"
             }
           ]
         }
